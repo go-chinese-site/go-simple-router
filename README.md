@@ -62,3 +62,9 @@ func main() {
 }
 
 ```
+
+## 学习、交流
+
+1. Go 语言中文网专门创建了 go-chinese-site Organization 的讨论节点：[Go项目协作](https://studygolang.com/go/cooperation)
+2. 专门创建 QQ 群用于及时交流沟通，但应该优先使用 issue 和 https://studygolang.com/go/cooperation 
+
