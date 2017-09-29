@@ -103,10 +103,12 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	route, ok := r.routers[path]
 	if !ok {
+		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "not found page")
 		return
 	}
 	if route.method != httpmethod {
+		w.WriteHeader(http.StatusNotImplemented)
 		fmt.Fprintf(w, "http method unsupported")
 		return
 	}
