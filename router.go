@@ -115,11 +115,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, ErrNotFound)
 		return
 	}
-	if route.method != httpMethod {
-		w.WriteHeader(http.StatusNotImplemented)
-		fmt.Fprintf(w, ErrMethodUnsupported)
-		return
-	}
 	c := &Context{
 		Request:  req,
 		Writer:   w,

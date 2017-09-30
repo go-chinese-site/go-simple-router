@@ -95,19 +95,18 @@ func TestRouterNotFound(t *testing.T) {
 	}
 }
 
-func TestRouterMethodUnsupported(t *testing.T) {
-	router := New()
-	router.POST("/test", func(*Context) {
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotImplemented {
-		t.Fatal("Method unsupported handling route failed")
-	}
-}
+//func TestRouterMethodUnsupported(t *testing.T) {
+//	router := New()
+//	router.POST("/test", func(*Context) {
+//	})
+//
+//	w := httptest.NewRecorder()
+//	req, _ := http.NewRequest("GET", "/test", nil)
+//	router.ServeHTTP(w, req)
+//	if w.Code != http.StatusNotImplemented {
+//		t.Fatal("Method unsupported handling route failed")
+//	}
+//}
 
 func TestRouterWithSameURL(t *testing.T) {
 	router := New()
