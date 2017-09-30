@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,16 +95,27 @@ func TestRouterNotFound(t *testing.T) {
 	}
 }
 
-func TestRouterMethodUnsupported(t *testing.T) {
+//func TestRouterMethodUnsupported(t *testing.T) {
+//	router := New()
+//	router.POST("/test", func(*Context) {
+//	})
+//
+//	w := httptest.NewRecorder()
+//	req, _ := http.NewRequest("GET", "/test", nil)
+//	router.ServeHTTP(w, req)
+//	if w.Code != http.StatusNotImplemented {
+//		t.Fatal("Method unsupported handling route failed")
+//	}
+//}
+
+func TestRouterWithSameURL(t *testing.T) {
 	router := New()
-	router.POST("/test", func(*Context) {
+	router.Group("/api", func() {
+		router.GET("/test")
+		router.POST("/test")
 	})
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotImplemented {
-		t.Fatal("Method unsupported handling route failed")
+	for k, r := range router.routers {
+		fmt.Printf("method is %s, path is %v\n", r.method, k)
 	}
 }

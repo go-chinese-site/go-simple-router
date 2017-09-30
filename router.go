@@ -11,6 +11,7 @@ const (
 	ErrNotFound = "not found page"
 	//ErrMethodUnsupported is method upsupported error.
 	ErrMethodUnsupported = "http method unsupported"
+	RouterKey            = "%s-%s"
 )
 
 type (
@@ -101,22 +102,17 @@ func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 		method:   method,
 		handlers: handlers,
 	}
-	r.routers[path] = route
+	r.routers[fmt.Sprintf(RouterKey, path, method)] = route
 }
 
 //ServeHTTP is implement the http.Handler interface.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	httpmethod := req.Method
+	httpMethod := req.Method
 	path := req.URL.Path
-	route, ok := r.routers[path]
+	route, ok := r.routers[fmt.Sprintf(RouterKey, path, httpMethod)]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, ErrNotFound)
-		return
-	}
-	if route.method != httpmethod {
-		w.WriteHeader(http.StatusNotImplemented)
-		fmt.Fprintf(w, ErrMethodUnsupported)
 		return
 	}
 	c := &Context{
