@@ -16,7 +16,7 @@ func TestRouterGET(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 	router.ServeHTTP(w, req)
 
 	if !routed {
@@ -31,7 +31,7 @@ func TestRouterPOST(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/test", nil)
+	req, _ := http.NewRequest(http.MethodPost, "/test", nil)
 	router.ServeHTTP(w, req)
 
 	if !routed {
@@ -49,7 +49,7 @@ func TestRouterGroup(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/test", nil)
 	router.ServeHTTP(w, req)
 
 	if !routed {
@@ -72,7 +72,7 @@ func TestRouterUse(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/test", nil)
 	router.ServeHTTP(w, req)
 
 	if !used || !routed {
@@ -86,7 +86,7 @@ func TestRouterNotFound(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/test1", nil)
+	req, _ := http.NewRequest(http.MethodPost, "/test1", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {
@@ -100,7 +100,7 @@ func TestRouterMethodUnsupported(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotImplemented {

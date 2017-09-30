@@ -6,50 +6,57 @@ import (
 	"path"
 )
 
-type (
-	//Router 路由器
-	Router struct {
-		//上级处理函数集合
-		globalHandlers []HandlerFunc
-		//上级路径
-		basePath string
-		//路由集合
-		routers map[string]*route
-	}
-	//route 单个路由
-	route struct {
-		//请求方法
-		method string
-		//处理函数
-		handlers []HandlerFunc
-	}
-	//Context 存储请求响应信息
-	Context struct {
-		Request *http.Request
-		Writer  http.ResponseWriter
-		//处理函数
-		handlers []HandlerFunc
-		//执行处理函数索引
-		index int8
-	}
-	//HandlerFunc 处理函数
-	HandlerFunc func(*Context)
+const (
+	rootPath = "/"
+
+	// ErrNotFound is not found error.
+	ErrNotFound = "not found page"
+
+	// ErrMethodUnsupported is method upsupported error.
+	ErrMethodUnsupported = "http method unsupported"
 )
 
-//New 创建路由器
+// Router is responsible for managing multiple routes.
+type Router struct {
+	globalHandlers []HandlerFunc
+	basePath       string
+	routers        map[string]*route
+}
+
+// Signle route
+type route struct {
+	method   string
+	handlers []HandlerFunc
+}
+
+// Context stores information about request and response.
+type Context struct {
+	// Request represents http request.
+	Request *http.Request
+
+	// Writer represents http response.
+	Writer   http.ResponseWriter
+	handlers []HandlerFunc
+	index    int8
+}
+
+// HandlerFunc represents the function of Context.
+type HandlerFunc func(*Context)
+
+// New represents creating a router.
 func New() *Router {
 	return &Router{
 		routers:  make(map[string]*route),
-		basePath: "/",
+		basePath: rootPath,
 	}
 }
 
-//Use 添加全局处理函数
+// Use represents the method of Router.
 func (r *Router) Use(handlers ...HandlerFunc) {
 	r.globalHandlers = append(r.globalHandlers, handlers...)
 }
 
-//Group 添加分组
+// Group represents the method of Router.
 func (r *Router) Group(partPath string, fn func(), handlers ...HandlerFunc) {
 	rootBasePath := r.basePath
 	rootHandlers := r.globalHandlers
@@ -60,26 +67,25 @@ func (r *Router) Group(partPath string, fn func(), handlers ...HandlerFunc) {
 	r.globalHandlers = rootHandlers
 }
 
-//GET 添加GET方法
+// GET represents the method of Router.
 func (r *Router) GET(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
 	handlers = r.combinHandlers(handlers)
-	r.addRoute("GET", path, handlers)
+	r.addRoute(http.MethodGet, path, handlers)
 }
 
-//POST 添加POST方法
+// POST represents the method of Router.
 func (r *Router) POST(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
 	handlers = r.combinHandlers(handlers)
-	r.addRoute("POST", path, handlers)
+	r.addRoute(http.MethodPost, path, handlers)
 }
 
-//Run 运行
+// Run start the ListenAndServe of http.
 func (r *Router) Run(addr string) error {
 	return http.ListenAndServe(addr, r)
 }
 
-//combinHandlers 合并处理函数
 func (r *Router) combinHandlers(handlers []HandlerFunc) []HandlerFunc {
 	finallyLen := len(r.globalHandlers) + len(handlers)
 	finallyHandlers := make([]HandlerFunc, finallyLen)
@@ -88,7 +94,6 @@ func (r *Router) combinHandlers(handlers []HandlerFunc) []HandlerFunc {
 	return finallyHandlers
 }
 
-//addRoute 添加到路由中
 func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	route := &route{
 		method:   method,
@@ -97,19 +102,19 @@ func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	r.routers[path] = route
 }
 
-//ServeHTTP 实现http.Handler interface
+// ServeHTTP implemented the http.Handler interface.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	httpmethod := req.Method
 	path := req.URL.Path
 	route, ok := r.routers[path]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "not found page")
+		fmt.Fprintf(w, ErrNotFound)
 		return
 	}
 	if route.method != httpmethod {
 		w.WriteHeader(http.StatusNotImplemented)
-		fmt.Fprintf(w, "http method unsupported")
+		fmt.Fprintf(w, ErrMethodUnsupported)
 		return
 	}
 	c := &Context{
@@ -121,7 +126,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c.Next()
 }
 
-//Next 调用下一个处理函数
+// Next call the next method.
 func (c *Context) Next() {
 	c.index++
 	if n := int8(len(c.handlers)); c.index < n {

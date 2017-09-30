@@ -22,8 +22,9 @@ package main
 
 import (
 	"fmt"
-	router " github.com/go-chinese-site/go-simple-router"
 	"log"
+
+	router "github.com/go-chinese-site/go-simple-router"
 )
 
 //GlobalHandle 全局处理函数
