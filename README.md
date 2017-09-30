@@ -1,4 +1,6 @@
 # go-simple-router
+
+[![Build Status](https://travis-ci.org/go-chinese-site/go-simple-router.svg?branch=master)](https://travis-ci.org/go-chinese-site/go-simple-router)
 [![GoDoc](https://godoc.org/github.com/go-chinese-site/go-simple-router?status.svg)](http://godoc.org/github.com/go-chinese-site/go-simple-router)
 
 golang实现的简单http路由器,用于学习理解http.
