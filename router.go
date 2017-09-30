@@ -6,37 +6,44 @@ import (
 	"path"
 )
 
+const (
+	//ErrNotFound is not found error.
+	ErrNotFound = "not found page"
+	//ErrMethodUnsupported is method upsupported error.
+	ErrMethodUnsupported = "http method unsupported"
+)
+
 type (
-	//Router 路由器
+	//Router is a http.Handler. store all routes.
 	Router struct {
-		//上级处理函数集合
+		//store parent all HandlerFunc.
 		globalHandlers []HandlerFunc
-		//上级路径
+		//store parent path.
 		basePath string
-		//路由集合
+		//store all routes.
 		routers map[string]*route
 	}
-	//route 单个路由
+	//route is storage http method and handle function.
 	route struct {
-		//请求方法
+		//http method.
 		method string
-		//处理函数
+		//handle function.
 		handlers []HandlerFunc
 	}
-	//Context 存储请求响应信息
+	//Context is storage request response information.
 	Context struct {
 		Request *http.Request
 		Writer  http.ResponseWriter
-		//处理函数
+		//handle function.
 		handlers []HandlerFunc
-		//执行处理函数索引
+		//The current handle function index is executed.
 		index int8
 	}
-	//HandlerFunc 处理函数
+	//HandlerFunc is a function that can be registered to a route to handle HTTP requests.
 	HandlerFunc func(*Context)
 )
 
-//New 创建路由器
+//New is returns an initialized Router.
 func New() *Router {
 	return &Router{
 		routers:  make(map[string]*route),
@@ -44,43 +51,43 @@ func New() *Router {
 	}
 }
 
-//Use 添加全局处理函数
+//Use is add global handle function.
 func (r *Router) Use(handlers ...HandlerFunc) {
 	r.globalHandlers = append(r.globalHandlers, handlers...)
 }
 
-//Group 添加分组
+//Group is add route group.
 func (r *Router) Group(partPath string, fn func(), handlers ...HandlerFunc) {
 	rootBasePath := r.basePath
 	rootHandlers := r.globalHandlers
 	r.basePath = path.Join(r.basePath, partPath)
-	r.globalHandlers = r.combinHandlers(handlers)
+	r.globalHandlers = r.combineHandlers(handlers)
 	fn()
 	r.basePath = rootBasePath
 	r.globalHandlers = rootHandlers
 }
 
-//GET 添加GET方法
+//GET is register GET method HandlerFunc to Router.
 func (r *Router) GET(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
-	handlers = r.combinHandlers(handlers)
-	r.addRoute("GET", path, handlers)
+	handlers = r.combineHandlers(handlers)
+	r.addRoute(http.MethodGet, path, handlers)
 }
 
-//POST 添加POST方法
+//POST is register POST method HandlerFunc to Router.
 func (r *Router) POST(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
-	handlers = r.combinHandlers(handlers)
-	r.addRoute("POST", path, handlers)
+	handlers = r.combineHandlers(handlers)
+	r.addRoute(http.MethodPost, path, handlers)
 }
 
-//Run 运行
+//Run listens on the TCP network address addr.
 func (r *Router) Run(addr string) error {
 	return http.ListenAndServe(addr, r)
 }
 
-//combinHandlers 合并处理函数
-func (r *Router) combinHandlers(handlers []HandlerFunc) []HandlerFunc {
+//combineHandlers is merge multiple HnalderFunc slice into one HandlerFunc slice.
+func (r *Router) combineHandlers(handlers []HandlerFunc) []HandlerFunc {
 	finallyLen := len(r.globalHandlers) + len(handlers)
 	finallyHandlers := make([]HandlerFunc, finallyLen)
 	copy(finallyHandlers, r.globalHandlers)
@@ -88,7 +95,7 @@ func (r *Router) combinHandlers(handlers []HandlerFunc) []HandlerFunc {
 	return finallyHandlers
 }
 
-//addRoute 添加到路由中
+//addRoute is add to routes.
 func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	route := &route{
 		method:   method,
@@ -97,19 +104,19 @@ func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	r.routers[path] = route
 }
 
-//ServeHTTP 实现http.Handler interface
+//ServeHTTP is implement the http.Handler interface.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	httpmethod := req.Method
 	path := req.URL.Path
 	route, ok := r.routers[path]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "not found page")
+		fmt.Fprintf(w, ErrNotFound)
 		return
 	}
 	if route.method != httpmethod {
 		w.WriteHeader(http.StatusNotImplemented)
-		fmt.Fprintf(w, "http method unsupported")
+		fmt.Fprintf(w, ErrMethodUnsupported)
 		return
 	}
 	c := &Context{
@@ -121,7 +128,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c.Next()
 }
 
-//Next 调用下一个处理函数
+//Next is call the next handler function.
 func (c *Context) Next() {
 	c.index++
 	if n := int8(len(c.handlers)); c.index < n {
