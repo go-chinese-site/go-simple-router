@@ -7,44 +7,45 @@ import (
 )
 
 const (
-	//ErrNotFound is not found error.
+	// ErrNotFound is not found error.
 	ErrNotFound = "not found page"
-	//ErrMethodUnsupported is method upsupported error.
+	// ErrMethodUnsupported is method upsupported error.
 	ErrMethodUnsupported = "http method unsupported"
-	RouterKey            = "%s-%s"
+	// RouterKey is route key format.
+	RouterKey = "%s-%s"
 )
 
 type (
-	//Router is a http.Handler. store all routes.
+	// Router is a http.Handler. store all routes.
 	Router struct {
-		//store parent all HandlerFunc.
+		// store parent all HandlerFunc.
 		globalHandlers []HandlerFunc
-		//store parent path.
+		// store parent path.
 		basePath string
-		//store all routes.
+		// store all routes.
 		routers map[string]*route
 	}
-	//route is storage http method and handle function.
+	// route is storage http method and handle function.
 	route struct {
-		//http method.
+		// http method.
 		method string
-		//handle function.
+		// handle function.
 		handlers []HandlerFunc
 	}
-	//Context is storage request response information.
+	// Context is storage request response information.
 	Context struct {
 		Request *http.Request
 		Writer  http.ResponseWriter
-		//handle function.
+		// handle function.
 		handlers []HandlerFunc
-		//The current handle function index is executed.
+		// The current handle function index is executed.
 		index int8
 	}
-	//HandlerFunc is a function that can be registered to a route to handle HTTP requests.
+	// HandlerFunc is a function that can be registered to a route to handle HTTP requests.
 	HandlerFunc func(*Context)
 )
 
-//New is returns an initialized Router.
+// New is returns an initialized Router.
 func New() *Router {
 	return &Router{
 		routers:  make(map[string]*route),
@@ -52,12 +53,12 @@ func New() *Router {
 	}
 }
 
-//Use is add global handle function.
+// Use is add global handle function.
 func (r *Router) Use(handlers ...HandlerFunc) {
 	r.globalHandlers = append(r.globalHandlers, handlers...)
 }
 
-//Group is add route group.
+// Group is add route group.
 func (r *Router) Group(partPath string, fn func(), handlers ...HandlerFunc) {
 	rootBasePath := r.basePath
 	rootHandlers := r.globalHandlers
@@ -68,26 +69,26 @@ func (r *Router) Group(partPath string, fn func(), handlers ...HandlerFunc) {
 	r.globalHandlers = rootHandlers
 }
 
-//GET is register GET method HandlerFunc to Router.
+// GET is register GET method HandlerFunc to Router.
 func (r *Router) GET(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
 	handlers = r.combineHandlers(handlers)
 	r.addRoute(http.MethodGet, path, handlers)
 }
 
-//POST is register POST method HandlerFunc to Router.
+// POST is register POST method HandlerFunc to Router.
 func (r *Router) POST(partPath string, handlers ...HandlerFunc) {
 	path := path.Join(r.basePath, partPath)
 	handlers = r.combineHandlers(handlers)
 	r.addRoute(http.MethodPost, path, handlers)
 }
 
-//Run listens on the TCP network address addr.
+// Run listens on the TCP network address addr.
 func (r *Router) Run(addr string) error {
 	return http.ListenAndServe(addr, r)
 }
 
-//combineHandlers is merge multiple HnalderFunc slice into one HandlerFunc slice.
+// combineHandlers is merge multiple HnalderFunc slice into one HandlerFunc slice.
 func (r *Router) combineHandlers(handlers []HandlerFunc) []HandlerFunc {
 	finallyLen := len(r.globalHandlers) + len(handlers)
 	finallyHandlers := make([]HandlerFunc, finallyLen)
@@ -96,7 +97,7 @@ func (r *Router) combineHandlers(handlers []HandlerFunc) []HandlerFunc {
 	return finallyHandlers
 }
 
-//addRoute is add to routes.
+// addRoute is add to routes.
 func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	route := &route{
 		method:   method,
@@ -105,7 +106,7 @@ func (r *Router) addRoute(method, path string, handlers []HandlerFunc) {
 	r.routers[fmt.Sprintf(RouterKey, path, method)] = route
 }
 
-//ServeHTTP is implement the http.Handler interface.
+// ServeHTTP is implement the http.Handler interface.
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	httpMethod := req.Method
 	path := req.URL.Path
@@ -124,7 +125,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c.Next()
 }
 
-//Next is call the next handler function.
+// Next is call the next handler function.
 func (c *Context) Next() {
 	c.index++
 	if n := int8(len(c.handlers)); c.index < n {
